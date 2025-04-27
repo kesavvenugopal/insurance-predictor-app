@@ -12,9 +12,7 @@
     <link id="theme-style" rel="stylesheet" href="{{ theme_css_url }}"
       data-light="{{ url_for('static', filename='style.css') }}"
       data-dark="{{ url_for('static', filename='darkstyle.css') }}">
-
 </head>
-
 
 <body>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
@@ -22,8 +20,6 @@
         <h1>
             <a href="index.html">Insurance Cost Predictor</a>
         </h1>
-
-        
         <button onclick="toggleTheme()" id="theme-toggle-btn">🌞 Light Mode</button>
     </header>
 
@@ -32,8 +28,9 @@
         <div class="form-group">
             <form id="predict-form" autocomplete="off">
                 <label for="age">Age:</label>
-                <input type="number" id="age" name="age" min="0" max="95" required>
-                
+                <input type="number" id="age" name="age" required>
+                <span id="age-error" class="error-message"></span>
+
                 <label for="gender">Gender:</label>
                 <select id="gender" name="gender" required>
                     <option value="" disabled selected>--Select--</option>
@@ -42,10 +39,12 @@
                 </select>
 
                 <label for="bmi">BMI:</label>
-                <input type="text" id="bmi" name="bmi" required>
+                <input type="number" step="0.01" id="bmi" name="bmi" required>
+                <span id="bmi-error" class="error-message"></span>
 
                 <label for="children">No. of Children:</label>
-                <input type="number" id="children" name="children">
+                <input type="number" id="children" name="children" required>
+                <span id="children-error" class="error-message"></span>
 
                 <fieldset>
                     <legend>Smoker:</legend>
@@ -67,64 +66,79 @@
                     <button type="submit" id="predict-button">Predict</button>
                     <button type="reset" id="reset-button">Reset</button>
                 </div>
-                <br>
-
+            </form>            
             <div id="prediction-result">
                 <h3>Prediction Result:</h3>
                 <p id="predicted-cost"></p>
             </div>
-
         </div>
     </main>
 
-    <script>
-        // Handling form submission
-        $('#predict-form').on('submit', function(e) {
-            e.preventDefault();
-    
-            var formData = {
-                age: $('#age').val(),
-                gender: $('#gender').val(),
-                bmi: $('#bmi').val(),
-                children: $('#children').val(),
-                smoker: $("input[name='smoker']:checked").val(),
-                region: $("input[name='region']:checked").val()
-            };
-            $.ajax({
-                url: '/predict', 
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(formData),
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Prediction Successful!',
-                        text: 'Your predicted insurance cost is ₹' + response.predicted_insurance_cost,
-                        confirmButtonText: 'Ok'
-                    });
-    
-                    $('#prediction-result').show(); 
-                    $('#predicted-cost').text('₹' + response.predicted_insurance_cost);  
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: xhr.responseText,
-                        confirmButtonText: 'Try Again'
-                    });
-                }
+<script>
+
+function validateInput(id, min, max, fieldName) {
+    $('#' + id).on('input', function() {
+        const value = parseFloat(this.value);
+        const errorSpan = $('#' + id + '-error');
+        if (isNaN(value)) {
+            errorSpan.text('');
+        } else if (value < min || value > max) {
+            errorSpan.text(`${fieldName} must be between ${min} and ${max}.`);
+        } else {
+            errorSpan.text('');
+        }
+    });
+}
+
+validateInput('age', 16, 65, 'Age');
+validateInput('bmi', 16, 47, 'BMI');
+validateInput('children', 0, 5, 'Number of Children');
+
+$('#predict-form').on('submit', function(e) {
+    e.preventDefault();
+
+    if ($('.error-message').filter(function() { return $(this).text() !== ""; }).length > 0) {
+        return;
+    }
+
+    var formData = {
+        age: parseFloat($('#age').val()),
+        gender: $('#gender').val(),
+        bmi: parseFloat($('#bmi').val()),
+        children: parseInt($('#children').val()),
+        smoker: $("input[name='smoker']:checked").val(),
+        region: $("input[name='region']:checked").val()
+    };
+
+    $.ajax({
+        url: '/predict',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        success: function(response) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Prediction Successful!',
+                text: 'Your predicted insurance cost is ₹' + response.predicted_insurance_cost,
+                confirmButtonText: 'Ok'
             });
-        });
-    
-        $('#predict-form').on('reset', function() {
-            $('#prediction-result').hide();  
-            $('#predicted-cost').text('');
-        });
-    </script>
-    
-    
+
+            $('#prediction-result').show();
+            $('#predicted-cost').text('₹' + response.predicted_insurance_cost);
+        },
+        error: function(xhr, status, error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: xhr.responseText,
+                confirmButtonText: 'Try Again'
+            });
+        }
+    });
+});
+</script>
 
 <script src="{{ url_for('static', filename='theme-toggle.js') }}"></script>
+
 </body>
 </html>
