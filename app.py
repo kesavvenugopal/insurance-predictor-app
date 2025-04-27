@@ -33,20 +33,20 @@ def predict():
         smoker = data.get('smoker')
         region = data.get('region')
 
-        if not age or not bmi or not children or not gender or not smoker or not region:
+        if age is None or bmi is None or children is None or gender is None or smoker is None or region is None:
             return jsonify({'error': 'All fields are required!'}), 400
 
         age = int(age)
-        if age < 0 or age > 95:
-            return jsonify({'error': 'Age must be between 0 and 95!'}), 400
+        if age < 16 or age > 65:
+            return jsonify({'error': 'Age must be between 16 and 65!'}), 400
 
         bmi = float(bmi)
-        if bmi <= 0:
-            return jsonify({'error': 'BMI must be a positive number!'}), 400
+        if bmi < 16 or bmi > 47:
+            return jsonify({'error': 'BMI must be between 16 and 47!'}), 400
 
         children = int(children)
-        if children < 0:
-            return jsonify({'error': 'Number of children must be 0 or greater!'}), 400
+        if children < 0 or children > 5:
+            return jsonify({'error': 'Number of children must be between 0 and 5!'}), 400
 
         if gender not in ['male', 'female']:
             return jsonify({'error': 'Invalid gender selected!'}), 400
@@ -70,6 +70,7 @@ def predict():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
 
 if __name__ == '__main__':
     app.run(debug=True)
