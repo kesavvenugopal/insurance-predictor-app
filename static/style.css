@@ -133,3 +133,8 @@ body, button {
         padding: 15px;
     }
 }
+
+.error-message {
+    color: red;
+    font-size: 0.85em;
+}
